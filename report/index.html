@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Locked Out: Housing in Europe</title>
+  <meta name="description" content="An end-to-end analysis of Europe's housing affordability crisis across the 27 EU member states, 2015–2026: prices vs incomes, who carries the burden, young adults, supply, a Housing Stress Index and a market segmentation. Eurostat data, Python, DuckDB SQL, scikit-learn.">
+  <meta property="og:title" content="Locked Out: Europe's housing crisis is an access crisis">
+  <meta property="og:description" content="Interactive data report on housing affordability in the 27 EU member states, built on official Eurostat data.">
+  <meta property="og:image" content="assets/preview.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232a78d6'/%3E%3Cpath d='M8 16l8-7 8 7v8H8z' fill='none' stroke='white' stroke-width='2.6' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    try { const t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <div class="brand">Housing in Europe <span>· data report</span></div>
+      <nav class="nav" aria-label="Sections">
+        <a href="#summary">Summary</a>
+        <a href="#gap">The gap</a>
+        <a href="#map">Map</a>
+        <a href="#outsiders">Who pays</a>
+        <a href="#young">Young adults</a>
+        <a href="#supply">Supply</a>
+        <a href="#index">Stress index</a>
+        <a href="#segments">Four Europes</a>
+        <a href="#method">Method</a>
+      </nav>
+      <button class="icon-btn" id="theme" type="button" aria-label="Toggle light/dark theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= HERO ================= -->
+    <section class="hero wrap" id="summary">
+      <div class="eyebrow">Data analysis · 27 EU member states · 2015–2026</div>
+      <h1>Locked out: Europe’s housing crisis is an access crisis</h1>
+      <p class="lede">
+        Since 2015, homes across the EU have become far more expensive than incomes can keep up with. Yet the share of people
+        overburdened by housing costs has <em>fallen</em>. This report uses official Eurostat data to show why both are true,
+        who is paying, and why there is no single European housing crisis: there are four distinct ones.
+      </p>
+      <div class="byline">
+        <span>Analysis: <b>Ionut Daniel Pop</b> · <a href="https://github.com/Ionutpop90">@Ionutpop90</a></span>
+        <span>Data: <b>Eurostat</b>, house prices to <span data-k="hpiQuarter"></span></span>
+        <span>Stack: <b>Python · DuckDB SQL · scikit-learn · SVG/JS</b></span>
+      </div>
+
+      <div class="kpis">
+        <article class="kpi hero-kpi">
+          <div>
+            <div class="label">EU house prices since 2015</div>
+            <div class="value" data-k="hpiEu">–</div>
+          </div>
+          <div>
+            <span class="badge badge-neutral">Median income: <span data-k="incomeEu"></span> over 2015–2025</span>
+            <svg class="spark" id="spark" aria-hidden="true"></svg>
+            <div class="sub">EU house price index, quarterly, 2015 = 100</div>
+          </div>
+        </article>
+        <article class="kpi">
+          <div class="label">Market renters overburdened by housing costs</div>
+          <div class="value" data-k="rentersBurden">–</div>
+          <div class="sub"><span data-k="burdenMultiple"></span> the rate for outright owners (<span data-k="ownersBurden"></span>)</div>
+        </article>
+        <article class="kpi">
+          <div class="label">New dwellings permitted, 2025 vs 2021</div>
+          <div class="value" data-k="permitsChange">–</div>
+          <div class="sub"><span data-k="permits2025"></span> homes in 2025, EU-27</div>
+        </article>
+        <article class="kpi">
+          <div class="label">Average age of leaving the parental home</div>
+          <div class="value" data-k="ageEu">–</div>
+          <div class="sub">from <span data-k="ageMin"></span> to <span data-k="ageMax"></span></div>
+        </article>
+        <article class="kpi">
+          <div class="label">Most stressed housing market</div>
+          <div class="value" data-k="topStress">–</div>
+          <div class="sub">Housing Stress Index, rank 1 of 27</div>
+        </article>
+      </div>
+
+      <ol class="findings">
+        <li><strong>Prices outran incomes, and rents did not.</strong> EU house prices rose <span data-k="hpiEu2"></span>, while median income rose
+          <span data-k="incomeEu2"></span> and measured rents rose <span data-k="rentsEu"></span>, less than overall inflation. The squeeze is on
+          <em>buying</em> a home, not on keeping one.</li>
+        <li><strong>Insiders are fine; outsiders pay.</strong> Market renters are <span data-k="burdenMultiple2"></span> as likely as outright owners
+          to be overburdened, and young people leave home at <span data-k="ageEu2"></span> on average. Overall burden is falling because most
+          Europeans already own their home.</li>
+        <li><strong>There are four housing crises, not one.</strong> A clustering of 27 markets on 9 indicators finds four archetypes. Two
+          different methods agree perfectly on the grouping. The policy that would help Portugal is not the one Germany needs.</li>
+      </ol>
+    </section>
+
+    <!-- ================= 1. GAP ================= -->
+    <section class="chapter wrap" id="gap">
+      <div class="chapter-head">
+        <div class="chapter-num">01 · The gap</div>
+        <div>
+          <h2>House prices rose faster than incomes; rents rose slower than everything</h2>
+          <p class="intro">Indexing four series to 2015 shows where the pressure built up. House prices pulled away from incomes until 2022,
+            paused when interest rates rose, and have since resumed climbing. Adjusted for inflation, homes are
+            <span data-k="realHpi"></span> more expensive than in 2015.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>EU-27: house prices, median income, consumer prices and rents</h3>
+        <p class="desc">Index, 2015 = 100, annual averages. Hover to compare years.</p>
+        <ul class="legend" id="legendGap"></ul>
+        <div id="chartGap"></div>
+        <div class="card-foot">
+          <span>Source: Eurostat prc_hpi_a, ilc_di03 (median equivalised net income), prc_hicp_ainr (CP041, all items)</span>
+          <details class="data"><summary>View data</summary></details>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>Why rents look tame:</strong> the HICP rent index follows <em>all</em> existing tenancies, many of them regulated or long-running.
+        New contracts in big cities have risen much faster, but Eurostat does not yet publish a harmonised series for them.
+        Gaps in housing data are also acknowledged in the Commission’s 2025 European Affordable Housing Plan.
+      </div>
+    </section>
+
+    <!-- ================= 2. MAP ================= -->
+    <section class="chapter wrap" id="map">
+      <div class="chapter-head">
+        <div class="chapter-num">02 · A continent of extremes</div>
+        <div>
+          <h2>From <span data-k="hpiMinName"></span> (<span data-k="hpiMin"></span>) to <span data-k="hpiMaxName"></span> (<span data-k="hpiMax"></span>)</h2>
+          <p class="intro">The EU average hides enormous differences. Choose an indicator to redraw the map and the ranking. Colours split the
+            27 countries into five equal-sized groups (quintiles), so each shade holds about five countries.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="chips" id="metricChips" role="radiogroup" aria-label="Indicator shown on the map"></div>
+        <div class="map-layout">
+          <div>
+            <h3 id="mapTitle"></h3>
+            <p class="desc" id="mapDesc"></p>
+            <div id="chartMap"></div>
+            <div class="map-legend" id="mapLegend" aria-hidden="true"></div>
+          </div>
+          <div>
+            <h3>Ranking</h3>
+            <p class="desc" id="rankDesc">All 27 member states, highest first.</p>
+            <div id="chartMapRank"></div>
+          </div>
+        </div>
+        <div class="card-foot">
+          <span>Source: Eurostat (see methodology) · boundaries © EuroGeographics / GISCO · Lambert equal-area projection</span>
+          <details class="data"><summary>View data</summary></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. OUTSIDERS ================= -->
+    <section class="chapter wrap" id="outsiders">
+      <div class="chapter-head">
+        <div class="chapter-num">03 · Who pays</div>
+        <div>
+          <h2>The burden fell for owners and stayed high for renters</h2>
+          <p class="intro">A household is <em>overburdened</em> when housing costs take more than 40% of its disposable income. The EU rate fell from
+            <span data-k="burden2015"></span> to <span data-k="burdenNow"></span>, largely because two in three Europeans own their home and
+            mortgage costs stayed low for most of the period. The people outside that group tell a different story.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Housing cost overburden by tenure, EU-27</h3>
+          <p class="desc">% of people in each group spending over 40% of disposable income on housing.</p>
+          <ul class="legend" id="legendTenure"></ul>
+          <div id="chartTenure"></div>
+          <div class="card-foot">
+            <span>Source: Eurostat ilc_lvho07c</span>
+            <details class="data"><summary>View data</summary></details>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Market renters overburdened, by country</h3>
+          <p class="desc">Latest year. The vertical line marks the EU-27.</p>
+          <div id="chartRenters"></div>
+          <div class="card-foot">
+            <span>Source: Eurostat ilc_lvho07c (RENT_MKT)</span>
+            <details class="data"><summary>View data</summary></details>
+          </div>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>The paradox in the East:</strong> Romania and Bulgaria have the most affordable prices relative to incomes in the EU, yet the
+        <em>highest</em> renter burden. With 86–93% of people owning their home, the small market-rent segment is where low-income
+        households end up.
+      </div>
+    </section>
+
+    <!-- ================= 4. YOUNG ================= -->
+    <section class="chapter wrap" id="young">
+      <div class="chapter-head">
+        <div class="chapter-num">04 · Young adults</div>
+        <div>
+          <h2>In the south and east, adulthood starts after 30</h2>
+          <p class="intro">The average age at which young people leave the parental home varies by a decade across the EU. Culture plays a role.
+            The data shows young adults stay longest where rental markets are thin (r = <span data-k="rAgeRent"></span> with the share of market renters)
+            and where prices grew fastest over five years (r = <span data-k="rAgeHpi"></span>). There is no link with the price-to-income ratio
+            (r = <span data-k="rAgePtir"></span>). The problem is getting a first foothold, not average affordability.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Estimated average age of leaving the parental household</h3>
+        <p class="desc">Latest year. The vertical line marks the EU-27 average.</p>
+        <div id="chartAge"></div>
+        <div class="card-foot">
+          <span>Source: Eurostat yth_demo_030</span>
+          <details class="data"><summary>View data</summary></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 5. SUPPLY ================= -->
+    <section class="chapter wrap" id="supply">
+      <div class="chapter-head">
+        <div class="chapter-num">05 · Supply</div>
+        <div>
+          <h2>Europe is permitting fewer homes just as demand peaks</h2>
+          <p class="intro">Residential building permits fell sharply after 2021, when construction and borrowing costs jumped. The Commission
+            estimates the EU needs over two million new homes a year to 2035. Permits alone do not explain prices, though: the correlation
+            across countries is weak, because supply responds to prices as much as it drives them.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <h3>Residential building permits, EU-27</h3>
+          <p class="desc">Number of dwellings permitted per year (thousands).</p>
+          <div id="chartPermits"></div>
+          <div class="card-foot">
+            <span>Source: Eurostat sts_cobp_a</span>
+            <details class="data"><summary>View data</summary></details>
+          </div>
+        </div>
+        <div class="card">
+          <h3>New homes vs price growth</h3>
+          <p class="desc">Permits per 1,000 residents (2023–2025 average) vs house price growth over the last five years. Colour = market archetype (chapter 07).</p>
+          <ul class="legend" id="legendScatter"></ul>
+          <div id="chartScatter"></div>
+          <div class="card-foot">
+            <span>Pearson r = <span data-k="scatterR"></span> · n = <span data-k="scatterN"></span></span>
+            <details class="data"><summary>View data</summary></details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 6. INDEX ================= -->
+    <section class="chapter wrap" id="index">
+      <div class="chapter-head">
+        <div class="chapter-num">06 · Housing Stress Index</div>
+        <div>
+          <h2>One score, five pillars, and the countries under most pressure</h2>
+          <p class="intro">To compare countries on more than one indicator, I built a composite index from five pillars. Each is a z-score
+            (0 = EU average, positive = more stress), with equal weights. The ranking is stable: dropping any single pillar keeps a rank
+            correlation of at least <span data-k="looMin"></span> with the full index.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Housing Stress Index by country and pillar</h3>
+        <p class="desc">Red = more stress than the EU average, blue = less. Sorted by the overall score (last column).</p>
+        <div id="chartIndex"></div>
+        <div class="scale" aria-hidden="true">
+          <span>less stress</span><span class="bar" id="indexScale"></span><span>more stress</span>
+        </div>
+        <div class="card-foot">
+          <span>Own calculation · pillars: price-to-income vs 2015 · price-to-income vs long-term average · renter overburden ·
+            age of leaving home + youth overburden · permits per 1,000 (inverted)</span>
+          <details class="data"><summary>View data</summary></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 7. SEGMENTS ================= -->
+    <section class="chapter wrap" id="segments">
+      <div class="chapter-head">
+        <div class="chapter-num">07 · Four Europes</div>
+        <div>
+          <h2>A clustering model finds four distinct housing markets</h2>
+          <p class="intro">I clustered the 27 markets with k-means on nine standardised indicators covering prices, valuation, burden, tenure,
+            young adults, crowding, supply and income. The best number of groups was chosen by silhouette score (k = <span data-k="k"></span>).
+            An independent hierarchical method (Ward) produces the same grouping (adjusted Rand index = <span data-k="ari"></span>). Each card shows the median of its member countries.</p>
+        </div>
+      </div>
+      <div class="segments" id="segmentCards"></div>
+      <div class="card">
+        <h3>The 27 markets in two dimensions</h3>
+        <p class="desc">Principal component analysis of the nine indicators. The two axes explain <span data-k="pcaVar"></span> of the variance.
+          Countries close together have similar housing markets.</p>
+        <ul class="legend" id="legendPca"></ul>
+        <div id="chartPca"></div>
+        <div class="card-foot">
+          <span>← richer, renter-heavy markets · owner-heavy, fast-growing markets → (PC1) · ↑ prices stretched vs incomes (PC2)</span>
+          <details class="data"><summary>View data</summary></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 8. METHOD ================= -->
+    <section class="chapter wrap" id="method">
+      <div class="chapter-head">
+        <div class="chapter-num">08 · Methodology</div>
+        <div>
+          <h2>How this analysis was built</h2>
+          <p class="intro">The analysis is fully reproducible: two commands download the latest data, rebuild every model and regenerate this report.</p>
+        </div>
+      </div>
+      <div class="pipeline" aria-label="Data pipeline">
+        <div class="step"><b>Extract</b><span>Eurostat API · 12 datasets</span></div><span class="arrow">→</span>
+        <div class="step"><b>Model</b><span>DuckDB SQL · staging → marts</span></div><span class="arrow">→</span>
+        <div class="step"><b>Analyse</b><span>z-score index · k-means · PCA</span></div><span class="arrow">→</span>
+        <div class="step"><b>Validate</b><span>coverage · sensitivity · Ward</span></div><span class="arrow">→</span>
+        <div class="step"><b>Publish</b><span>SVG/JS report · GISCO map</span></div>
+      </div>
+      <div class="card method">
+        <div>
+          <h3>Data</h3>
+          <ul>
+            <li><code>prc_hpi_q</code> / <code>prc_hpi_a</code>: house price index, all dwellings</li>
+            <li><code>tipsho60</code>: standardised house price-to-income ratio</li>
+            <li><code>ilc_di03</code>: median equivalised net income (EU-SILC)</li>
+            <li><code>prc_hicp_ainr</code>: HICP actual rents (CP041) and all items</li>
+            <li><code>ilc_lvho07a/c</code>, <code>ilc_lvho05a</code>, <code>ilc_lvho02</code>: overburden, overcrowding, tenure</li>
+            <li><code>yth_demo_030</code>: age of leaving the parental home</li>
+            <li><code>sts_cobp_a</code>, <code>demo_gind</code>: residential permits, population</li>
+          </ul>
+          <h3>Data quality handled</h3>
+          <ul>
+            <li><strong>Currency break:</strong> Croatia’s income series switches from kuna to euro in 2023. Growth is taken from the continuous euro series wherever this happens.</li>
+            <li><strong>Greece</strong> is not covered by Eurostat’s house price index. It is shown as n/a on price maps, and imputed with the median only in the clustering.</li>
+            <li><strong>Outliers:</strong> index z-scores are winsorised at ±2.5 (Malta’s and Cyprus’s permit rates would otherwise dominate the supply pillar).</li>
+          </ul>
+        </div>
+        <div>
+          <h3>Techniques</h3>
+          <ul>
+            <li>SQL window functions, <code>arg_max</code> for the latest value per country, <code>FILTER</code> pivots and <code>UNPIVOT</code> coverage checks</li>
+            <li>Composite index with leave-one-pillar-out sensitivity (Spearman)</li>
+            <li>k-means with silhouette selection (k = 2…6), validated against Ward clustering (ARI), and PCA for the 2-D view</li>
+            <li>Quantile classification for the choropleth; equal-area projection</li>
+          </ul>
+          <h3>Limitations</h3>
+          <ul>
+            <li>Indicators have different latest years: prices to <span data-k="hpiQuarter2"></span>, survey data to 2025, price-to-income to 2024.</li>
+            <li>HICP rents under-represent new contracts, and national averages hide large city–region differences.</li>
+            <li>With n = 27, clusters describe structure; they are not statistical proof. Index weights are a choice, and the sensitivity test shows they do not drive the result.</li>
+            <li>The analysis is descriptive and shows correlation, not causation.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>Data © European Union, Eurostat · reuse authorised with acknowledgement. Boundaries © EuroGeographics.</span>
+      <span>Built by Ionut Daniel Pop · <a href="https://github.com/Ionutpop90/europe-housing-affordability">Source code</a></span>
+    </div>
+  </footer>
+
+  <script type="module" src="assets/app.js"></script>
+</body>
+</html>
