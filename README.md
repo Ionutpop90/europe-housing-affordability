@@ -90,4 +90,4 @@ Eurostat (© European Union, reuse authorised with acknowledgement): `prc_hpi_q`
 
 ---
 
-*Author: **Ionut Daniel Pop** · GitHub [@Ionutpop90](https://github.com/Ionutpop90) · Other projects: [Europe car transition](https://github.com/Ionutpop90/europe-car-transition) · [Europe health check](https://github.com/Ionutpop90/europe-health-check) · [Romania vs EU inflation](https://github.com/Ionutpop90/romania-inflation-analysis)*
+*Author: **Ionut Daniel Pop** · GitHub [@Ionutpop90](https://github.com/Ionutpop90) · Other projects: [Romania by the numbers](https://github.com/Ionutpop90/romania-by-the-numbers) · [Europe car transition](https://github.com/Ionutpop90/europe-car-transition) · [Europe health check](https://github.com/Ionutpop90/europe-health-check) · [Romania vs EU inflation](https://github.com/Ionutpop90/romania-inflation-analysis)*
